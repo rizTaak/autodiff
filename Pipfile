@@ -1,0 +1,13 @@
+[requires]
+python_version = "3.10"
+
+[packages]
+numpy = "*"
+
+[dev-packages]
+pytest = "*"
+pylint = "*"
+mypy = "*"
+bandit = "*"
+pydocstyle = "*"
+black = "*"
