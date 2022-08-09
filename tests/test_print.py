@@ -29,5 +29,5 @@ program.forward(z)
 program.print()
 
 print("****adjoint****")
-program.grad()
+program.backward()
 program.print()

@@ -65,6 +65,7 @@ def test_forward_mix():
     assert dy == 14.0
     assert dz == 5.0
 
+
 def get_indices(name: str, nodes: List[Var]) -> Set[int]:
     """Get all indices of nodes with given name."""
     result = set()
@@ -72,6 +73,7 @@ def get_indices(name: str, nodes: List[Var]) -> Set[int]:
         if node.name == name:
             result.add(idx)
     return result
+
 
 def test_bfs():
     """Test bfs order."""
@@ -82,17 +84,18 @@ def test_bfs():
     # grad
     nodes = list(f.bfs())
     assert len(nodes) == 6
-    muls = get_indices('*', nodes)
+    muls = get_indices("*", nodes)
     assert len(muls) == 2
-    adds = get_indices('+', nodes)
+    adds = get_indices("+", nodes)
     assert len(adds) == 1
-    xs = get_indices('x', nodes)
+    xs = get_indices("x", nodes)
     assert len(xs) == 1
-    ys = get_indices('y', nodes)
+    ys = get_indices("y", nodes)
     assert len(ys) == 1
-    zs = get_indices('z', nodes)
+    zs = get_indices("z", nodes)
     assert len(zs) == 1
     assert all(l < r for l in adds for r in muls)
+
 
 def test_dfs():
     """Test dfs order."""
@@ -103,17 +106,18 @@ def test_dfs():
     # grad
     nodes = list(f.dfs())
     assert len(nodes) == 6
-    muls = get_indices('*', nodes)
+    muls = get_indices("*", nodes)
     assert len(muls) == 2
-    adds = get_indices('+', nodes)
+    adds = get_indices("+", nodes)
     assert len(adds) == 1
-    xs = get_indices('x', nodes)
+    xs = get_indices("x", nodes)
     assert len(xs) == 1
-    ys = get_indices('y', nodes)
+    ys = get_indices("y", nodes)
     assert len(ys) == 1
-    zs = get_indices('z', nodes)
+    zs = get_indices("z", nodes)
     assert len(zs) == 1
     assert all(l < r for l in muls for r in adds)
+
 
 def test_grade_mix():
     """Test grad is calculated correctly for multiplication and addition."""
@@ -132,7 +136,31 @@ def test_grade_mix():
     assert dx == 5.0
     assert dy == 14.0
     assert dz == 5.0
-    f.grad()
-    assert dx == x.adjoint()
-    assert dy == y.adjoint()
-    assert dz == z.adjoint()
+    f.backward()
+    assert dx == x.grad()
+    assert dy == y.grad()
+    assert dz == z.grad()
+
+
+def test_sub():
+    """Test subtract operator."""
+    # graph
+    x = Var("x")
+    y = Var("y")
+    z = Var("z")
+    f = (x * y) - (y * z)
+    # grad
+    x.assign(3.0)
+    y.assign(7.0)
+    z.assign(2.0)
+    assert f.value() == 7.0
+    dx = f.forward(x)
+    dy = f.forward(y)
+    dz = f.forward(z)
+    assert dx == 7.0
+    assert dy == 1.0
+    assert dz == -7.0
+    f.backward()
+    assert dx == x.grad()
+    assert dy == y.grad()
+    assert dz == z.grad()

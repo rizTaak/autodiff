@@ -1,11 +1,10 @@
 """Graph related types."""
-from functools import reduce
 from collections import deque
-import operator
 
 from abc import ABC, abstractmethod
 from typing import Deque, Iterable, List, cast, Tuple
 from xmlrpc.client import Boolean
+
 
 class Op(ABC):
     """Operator in a graph."""
@@ -22,15 +21,15 @@ class Op(ABC):
     def forward(self, wrt: "Var"):  # pylint: disable:invalid-name
         """Calculate forward gradient with respect to given variable."""
 
-    def grad(self, root: Boolean = False):
+    def backward(self, root: Boolean = False):
         """Calculate adjoint if not root. Set adjoint to 1.0 otherwise."""
         if root:
             self.var.adjoint_value = 1.0
         else:
-            self._grad()
+            self._backward()
 
     @abstractmethod
-    def _grad(self):
+    def _backward(self):
         """Calculate adjoint of the node."""
 
     def accum_grad(self, contrib: float):
@@ -63,7 +62,7 @@ class Val(Op):
             f"forward={self.var.forward_value}"
         )
 
-    def _grad(self):
+    def _backward(self):
         """No children so nothing much to do."""
 
 
@@ -72,7 +71,9 @@ class Add(Op):
 
     def eval(self):
         """Return result of addition."""
-        self.var.eval_value = sum(v.eval_value for v in self.var.children)
+        self.var.eval_value = (
+            self.var.children[0].eval_value + self.var.children[1].eval_value
+        )
 
     def forward(self, wrt: "Var"):
         """Calculate grad of addition."""
@@ -80,16 +81,49 @@ class Add(Op):
             self.var.children[0].forward_value + self.var.children[1].forward_value
         )
 
-    def _grad(self):
+    def _backward(self):
         """Progagate grad values to children of add operator."""
         self.var.children[0].op.accum_grad(self.var.adjoint_value)
         self.var.children[1].op.accum_grad(self.var.adjoint_value)
 
     def print(self, prefix: str = ""):
         """Print add operator description."""
-        print(prefix + f"{self.var.name}| "
-              f"val={self.var.eval_value} adjoint={self.var.adjoint_value} "
-              f"forward={self.var.forward_value}")
+        print(
+            prefix + f"{self.var.name}| "
+            f"val={self.var.eval_value} adjoint={self.var.adjoint_value} "
+            f"forward={self.var.forward_value}"
+        )
+        for child in self.var.children:
+            child.print(prefix + "   ")
+
+
+class Sub(Op):
+    """Subtract operator."""
+
+    def eval(self):
+        """Return result of subtraction."""
+        self.var.eval_value = (
+            self.var.children[0].eval_value - self.var.children[1].eval_value
+        )
+
+    def forward(self, wrt: "Var"):
+        """Calculate grad of subtraction."""
+        self.var.forward_value = (
+            self.var.children[0].forward_value - self.var.children[1].forward_value
+        )
+
+    def _backward(self):
+        """Progagate grad values to children of subtract operator."""
+        self.var.children[0].op.accum_grad(self.var.adjoint_value)
+        self.var.children[1].op.accum_grad(-self.var.adjoint_value)
+
+    def print(self, prefix: str = ""):
+        """Print subtract operator description."""
+        print(
+            prefix + f"{self.var.name}| "
+            f"val={self.var.eval_value} adjoint={self.var.adjoint_value} "
+            f"forward={self.var.forward_value}"
+        )
         for child in self.var.children:
             child.print(prefix + "   ")
 
@@ -99,8 +133,8 @@ class Mult(Op):
 
     def eval(self):
         """Return result of multiplication."""
-        self.var.eval_value = reduce(
-            operator.mul, (v.eval_value for v in self.var.children), 1.0
+        self.var.eval_value = (
+            self.var.children[0].eval_value * self.var.children[1].eval_value
         )
 
     def forward(self, wrt: "Var"):
@@ -110,16 +144,22 @@ class Mult(Op):
             + self.var.children[0].eval_value * self.var.children[1].forward_value
         )
 
-    def _grad(self):
+    def _backward(self):
         """Progagate grad values to children of multiply operator."""
-        self.var.children[0].op.accum_grad(self.var.adjoint_value * self.var.children[1].eval_value)
-        self.var.children[1].op.accum_grad(self.var.adjoint_value * self.var.children[0].eval_value)
+        self.var.children[0].op.accum_grad(
+            self.var.adjoint_value * self.var.children[1].eval_value
+        )
+        self.var.children[1].op.accum_grad(
+            self.var.adjoint_value * self.var.children[0].eval_value
+        )
 
     def print(self, prefix: str = ""):
         """Print multiplication description."""
-        print(prefix + f"{self.var.name}| "
-        f"val={self.var.eval_value} forward={self.var.forward_value} "
-        f"adjoint={self.var.adjoint_value}")
+        print(
+            prefix + f"{self.var.name}| "
+            f"val={self.var.eval_value} forward={self.var.forward_value} "
+            f"adjoint={self.var.adjoint_value}"
+        )
         for child in self.var.children:
             child.print(prefix + "   ")
 
@@ -167,13 +207,21 @@ class Var:
         new.add_child(other)
         return new
 
+    def __sub__(self, other: "Var"):
+        """Return new node that represents subtraciton operator on self and other."""
+        new = Var("-")
+        new.op = Sub(new)
+        new.add_child(self)
+        new.add_child(other)
+        return new
+
     def value(self) -> float:
         """Evaluate and return value of the node."""
         for node in self.dfs():
             node.op.eval()
         return self.eval_value
 
-    def adjoint(self) -> float:
+    def grad(self) -> float:
         """Get adjoint value."""
         return self.adjoint_value
 
@@ -191,16 +239,16 @@ class Var:
             node.op.forward(cast("Var", wrt))
         return self.forward_value
 
-    def grad(self):
+    def backward(self):
         """Calculate backward gradient.
 
         Value of gradient can be fetched using adjoint function on the node.
         """
         self.value()
         self.clear_grad()
-        self.op.grad(True)
+        self.op.backward(True)
         for node in self.bfs():
-            node.op.grad()
+            node.op.backward()
 
     def clear_grad(self):
         """Clear out all values of grad in graph."""
@@ -236,8 +284,9 @@ class Var:
         seen.add(self)
         while pending:
             current = pending.pop()
-            if not current.parents \
-                or all(parent in yielded for parent in current.parents):
+            if not current.parents or all(
+                parent in yielded for parent in current.parents
+            ):
                 yield current
                 yielded.add(current)
                 for child in current.children:
