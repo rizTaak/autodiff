@@ -16,6 +16,6 @@ for itr in range(10):
     dx = f.forward(x)
     dy = f.forward(y)
     x.assign(x.value() - LRATE * dx)
-    y.assign(x.value() - LRATE * dy)
+    y.assign(y.value() - LRATE * dy)
     val = f.value()
     print(f"iter {itr}: val={val}, x={x.value()}, y={y.value()}")

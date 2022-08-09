@@ -15,6 +15,6 @@ LRATE = 0.1
 for itr in range(10):
     f.backward()
     x.assign(x.value() - LRATE * x.grad())
-    y.assign(x.value() - LRATE * y.grad())
+    y.assign(y.value() - LRATE * y.grad())
     val = f.value()
     print(f"iter {itr}: val={val}, x={x.value()}, y={y.value()}")
