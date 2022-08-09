@@ -90,7 +90,7 @@ class Add(Op):
         """Print add operator description."""
         print(
             prefix + f"{self.var.name}| "
-            f"val={self.var.eval_value} adjoint={self.var.adjoint_value} "
+            f"val={self.var.eval_value} grad={self.var.adjoint_value} "
             f"forward={self.var.forward_value}"
         )
         for child in self.var.children:
@@ -121,7 +121,7 @@ class Sub(Op):
         """Print subtract operator description."""
         print(
             prefix + f"{self.var.name}| "
-            f"val={self.var.eval_value} adjoint={self.var.adjoint_value} "
+            f"val={self.var.eval_value} grad={self.var.adjoint_value} "
             f"forward={self.var.forward_value}"
         )
         for child in self.var.children:
@@ -157,8 +157,8 @@ class Mult(Op):
         """Print multiplication description."""
         print(
             prefix + f"{self.var.name}| "
-            f"val={self.var.eval_value} forward={self.var.forward_value} "
-            f"adjoint={self.var.adjoint_value}"
+            f"val={self.var.eval_value} grad={self.var.adjoint_value} "
+            f"forward={self.var.forward_value}"
         )
         for child in self.var.children:
             child.print(prefix + "   ")

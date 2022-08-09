@@ -5,29 +5,29 @@ from autodiff.graph import Var
 x = Var("x")
 y = Var("y")
 z = Var("z")
-program = (x * y) + (y * z)
+f = (x * y) + (y * z)
 
-# eval
 x.assign(3.0)
 y.assign(5.0)
 z.assign(11.0)
 
 print("****eval****")
-program.value()
-program.print()
+f.value()
+f.print()
 
+# eval
 print("****grad(x)****")
-program.forward(x)
-program.print()
+f.forward(x)
+f.print()
 
 print("****grad(y)****")
-program.forward(y)
-program.print()
+f.forward(y)
+f.print()
 
 print("****grad(z)****")
-program.forward(z)
-program.print()
+f.forward(z)
+f.print()
 
 print("****adjoint****")
-program.backward()
-program.print()
+f.backward()
+f.print()
