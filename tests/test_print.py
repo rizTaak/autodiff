@@ -17,13 +17,17 @@ program.value()
 program.print()
 
 print("****grad(x)****")
-program.grad(x)
+program.forward(x)
 program.print()
 
 print("****grad(y)****")
-program.grad(y)
+program.forward(y)
 program.print()
 
 print("****grad(z)****")
-program.grad(z)
+program.forward(z)
+program.print()
+
+print("****adjoint****")
+program.grad()
 program.print()
