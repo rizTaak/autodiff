@@ -35,6 +35,11 @@ z.assign(11.0)
 f.backward()
 # print state of the graph
 f.print()
+# get gradients
+dx = x.grad()
+dy = y.grad()
+dz = z.grad()
+print(f'dx={dx}, dy={dy}, dx{dz}')
 ```
 
 Output
@@ -47,4 +52,5 @@ Output
    *| val=55.0 grad=1.0 forward=nan
       y| val=5.0 grad=14.0 forward=nan
       z| val=11.0 grad=5.0 forward=nan
+dx=5.0, dy=14.0, dx5.0
 ```
