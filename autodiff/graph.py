@@ -1,9 +1,7 @@
 """Graph related types."""
 from collections import deque
-
 from abc import ABC, abstractmethod
 from typing import Deque, Iterable, List, cast, Tuple
-from xmlrpc.client import Boolean
 
 
 class Op(ABC):
@@ -21,7 +19,7 @@ class Op(ABC):
     def forward(self, wrt: "Var"):  # pylint: disable:invalid-name
         """Calculate forward gradient with respect to given variable."""
 
-    def backward(self, root: Boolean = False):
+    def backward(self, root: bool = False):
         """Calculate adjoint if not root. Set adjoint to 1.0 otherwise."""
         if root:
             self.var.adjoint_value = 1.0
@@ -257,7 +255,7 @@ class Var:
 
     def dfs(self) -> Iterable["Var"]:
         """Return nodes of the graph rooted with this node in depth first order."""
-        pending: Deque[Tuple["Var", Boolean]] = deque()
+        pending: Deque[Tuple["Var", bool]] = deque()
         seen = set()
         pending.append((self, False))
         seen.add(self)
