@@ -1,4 +1,5 @@
 # autodiff
+![build](https://github.com/rizTaak/autodiff/actions/workflows/main.yml/badge.svg)
 
 Toy implementaion of automatic differentiation for learning purpose
 
