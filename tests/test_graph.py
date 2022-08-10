@@ -164,3 +164,11 @@ def test_sub():
     assert dx == x.grad()
     assert dy == y.grad()
     assert dz == z.grad()
+
+def test_literal():
+    """Test usage of literal number."""
+    x = Var("x")
+    f: Var = x*2.0
+    x.assign(3.0)
+    assert f.value() == 6.0
+

@@ -1,8 +1,10 @@
 """Graph related types."""
 from collections import deque
 from abc import ABC, abstractmethod
-from typing import Deque, Iterable, List, cast, Tuple
+from typing import Deque, Iterable, List, Union, cast, Tuple, get_args
 
+Number = Union[float, int]
+NodeType = Union[float, int, "Var"]
 
 class Op(ABC):
     """Operator in a graph."""
@@ -189,28 +191,31 @@ class Var:
         self.parents.append(parent)
         parent.children.append(self)
 
-    def __add__(self, other: "Var"):
+    def __add__(self, other: NodeType):
         """Return new node that represents add operation on self and other."""
+        resolved = Var.resolve(other)
         new = Var("+")
         new.op = Add(new)
         new.add_child(self)
-        new.add_child(other)
+        new.add_child(resolved)
         return new
 
-    def __mul__(self, other: "Var"):
+    def __mul__(self, other: NodeType):
         """Return new node that represents multiplication operation on self and other."""
+        resolved = Var.resolve(other)
         new = Var("*")
         new.op = Mult(new)
         new.add_child(self)
-        new.add_child(other)
+        new.add_child(resolved)
         return new
 
-    def __sub__(self, other: "Var"):
+    def __sub__(self, other: NodeType):
         """Return new node that represents subtraciton operator on self and other."""
+        resolved = Var.resolve(other)
         new = Var("-")
         new.op = Sub(new)
         new.add_child(self)
-        new.add_child(other)
+        new.add_child(resolved)
         return new
 
     def value(self) -> float:
@@ -293,3 +298,13 @@ class Var:
                         seen.add(child)
             else:
                 pending.appendleft(current)
+
+    @classmethod
+    def resolve(cls, node: NodeType) -> "Var":
+        """Convert to Var if not already a Var."""
+        if isinstance(node, get_args(Number)):
+            new = Var(str(node))
+            new.op = Val(new)
+            new.assign(float(cast(Union[float, int], node)))
+            return new
+        return cast("Var", node)

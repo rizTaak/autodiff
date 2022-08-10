@@ -1,33 +1,50 @@
 """Print graph in console."""
 from autodiff.graph import Var
 
-# graph
-x = Var("x")
-y = Var("y")
-z = Var("z")
-f = (x * y) + (y * z)
+# pylint: disable=invalid-name
 
-x.assign(3.0)
-y.assign(5.0)
-z.assign(11.0)
+def test_print():
+    """Test printing different states of graph."""
+    # graph
+    x = Var("x")
+    y = Var("y")
+    z = Var("z")
+    f = (x * y) + (y * z)
 
-print("****eval****")
-f.value()
-f.print()
+    x.assign(3.0)
+    y.assign(5.0)
+    z.assign(11.0)
 
-# eval
-print("****grad(x)****")
-f.forward(x)
-f.print()
+    print("****eval****")
+    f.value()
+    f.print()
 
-print("****grad(y)****")
-f.forward(y)
-f.print()
+    # eval
+    print("****grad(x)****")
+    f.forward(x)
+    f.print()
 
-print("****grad(z)****")
-f.forward(z)
-f.print()
+    print("****grad(y)****")
+    f.forward(y)
+    f.print()
 
-print("****adjoint****")
-f.backward()
-f.print()
+    print("****grad(z)****")
+    f.forward(z)
+    f.print()
+
+    print("****adjoint****")
+    f.backward()
+    f.print()
+
+
+def test_literal_print():
+    """Test printing of graph with literal."""
+    x = Var("x")
+    f: Var = x*2.0
+    x.assign(3.0)
+    f.value()
+    f.print()
+
+
+# test_print()
+test_literal_print()
