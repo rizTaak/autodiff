@@ -1,10 +1,14 @@
 """Graph tests."""
-from tkinter import Y
+import math
 from typing import List, Set
 from autodiff.graph import Var
 
 # pylint: disable=invalid-name
 
+
+def close(left, right) -> bool:
+    """Match 6 digits."""
+    return math.isclose(left, right, abs_tol=0.0000009)
 
 def test_eval_mult():
     """Test value is calculated correctly for multiplication."""
@@ -184,6 +188,22 @@ def test_negative():
     dy = f.forward(y)
     assert dx == -3.0
     assert dy == -2.0
+    f.backward()
+    assert dx == x.grad()
+    assert dy == y.grad()
+
+
+def test_div():
+    """Test divsion."""
+    x = Var("x")
+    y = Var("y")
+    f: Var = x/y
+    x.assign(2.0)
+    y.assign(3.0)
+    dx = f.forward(x)
+    dy = f.forward(y)
+    assert close(dx, 0.333333)
+    assert close(dy, -0.222222)
     f.backward()
     assert dx == x.grad()
     assert dy == y.grad()

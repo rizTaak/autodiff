@@ -27,7 +27,7 @@ x = Var("x")
 y = Var("y")
 z = Var("z")
 # define function (graph)
-f = (x * y) + (y * z)
+f = x*y+y*z
 # assign values to variables
 x.assign(3.0)
 y.assign(5.0)

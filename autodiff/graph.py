@@ -36,9 +36,15 @@ class Op(ABC):
         """Accumulate grad value."""
         self.var.adjoint_value += contrib
 
-    @abstractmethod
     def print(self, prefix: str = ""):
         """Print operator detail."""
+        print(
+            prefix + f"{self.var.name}| "
+            f"val={self.var.eval_value} grad={self.var.adjoint_value} "
+            f"forward={self.var.forward_value}"
+        )
+        for child in self.var.children:
+            child.print(prefix + "   ")
 
 
 class Val(Op):
@@ -53,14 +59,6 @@ class Val(Op):
             self.var.forward_value = 1.0
         else:
             self.var.forward_value = 0.0
-
-    def print(self, prefix: str = ""):
-        """Print constant value description."""
-        print(
-            prefix + f"{self.var.name if self.var.name else id(self.var)}| "
-            f"val={self.var.eval_value} grad={self.var.adjoint_value} "
-            f"forward={self.var.forward_value}"
-        )
 
     def _backward(self):
         """No children so nothing much to do."""
@@ -86,16 +84,6 @@ class Add(Op):
         self.var.children[0].op.accum_grad(self.var.adjoint_value)
         self.var.children[1].op.accum_grad(self.var.adjoint_value)
 
-    def print(self, prefix: str = ""):
-        """Print add operator description."""
-        print(
-            prefix + f"{self.var.name}| "
-            f"val={self.var.eval_value} grad={self.var.adjoint_value} "
-            f"forward={self.var.forward_value}"
-        )
-        for child in self.var.children:
-            child.print(prefix + "   ")
-
 
 class Sub(Op):
     """Subtract operator."""
@@ -117,16 +105,6 @@ class Sub(Op):
         self.var.children[0].op.accum_grad(self.var.adjoint_value)
         self.var.children[1].op.accum_grad(-self.var.adjoint_value)
 
-    def print(self, prefix: str = ""):
-        """Print subtract operator description."""
-        print(
-            prefix + f"{self.var.name}| "
-            f"val={self.var.eval_value} grad={self.var.adjoint_value} "
-            f"forward={self.var.forward_value}"
-        )
-        for child in self.var.children:
-            child.print(prefix + "   ")
-
 
 class Neg(Op):
     """Negation operator."""
@@ -142,16 +120,6 @@ class Neg(Op):
     def _backward(self):
         """Progagate grad values to children of negation operator."""
         self.var.children[0].op.accum_grad(-self.var.adjoint_value)
-
-    def print(self, prefix: str = ""):
-        """Print negation operator description."""
-        print(
-            prefix + f"{self.var.name}| "
-            f"val={self.var.eval_value} grad={self.var.adjoint_value} "
-            f"forward={self.var.forward_value}"
-        )
-        for child in self.var.children:
-            child.print(prefix + "   ")
 
 class Mult(Op):
     """Multiply operator."""
@@ -178,16 +146,34 @@ class Mult(Op):
             self.var.adjoint_value * self.var.children[0].eval_value
         )
 
-    def print(self, prefix: str = ""):
-        """Print multiplication description."""
-        print(
-            prefix + f"{self.var.name}| "
-            f"val={self.var.eval_value} grad={self.var.adjoint_value} "
-            f"forward={self.var.forward_value}"
-        )
-        for child in self.var.children:
-            child.print(prefix + "   ")
 
+class Div(Op):
+    """Division operator."""
+
+    def eval(self):
+        """Return result of division."""
+        left_val = self.var.children[0].eval_value
+        right_val = self.var.children[1].eval_value
+        self.var.eval_value = left_val / right_val
+
+    def forward(self, wrt: "Var"):
+        """Calculate grad of division."""
+        left_val = self.var.children[0].eval_value
+        left_d = self.var.children[0].forward_value
+        right_val = self.var.children[1].eval_value
+        right_d = self.var.children[1].forward_value
+        self.var.forward_value = (
+            left_d / right_val
+            + right_d * -1 * left_val * right_val**-2
+        )
+
+    def _backward(self):
+        """Progagate grad values to children of multiply operator."""
+        d_self = self.var.adjoint_value
+        left_val = self.var.children[0].eval_value
+        right_val = self.var.children[1].eval_value
+        self.var.children[0].op.accum_grad(d_self / right_val)
+        self.var.children[1].op.accum_grad(d_self*-1*left_val*right_val**-2)
 
 class Var:
     """Node in a graph."""
@@ -230,6 +216,15 @@ class Var:
         resolved = Var.resolve(other)
         new = Var("*")
         new.op = Mult(new)
+        new.add_child(self)
+        new.add_child(resolved)
+        return new
+
+    def __truediv__(self, other: NodeType):
+        """Return new node that represents division operation on self and other."""
+        resolved = Var.resolve(other)
+        new = Var("/")
+        new.op = Div(new)
         new.add_child(self)
         new.add_child(resolved)
         return new
