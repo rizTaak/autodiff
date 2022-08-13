@@ -128,6 +128,31 @@ class Sub(Op):
             child.print(prefix + "   ")
 
 
+class Neg(Op):
+    """Negation operator."""
+
+    def eval(self):
+        """Return result of negation."""
+        self.var.eval_value = -self.var.children[0].eval_value
+
+    def forward(self, wrt: "Var"):
+        """Calculate grad of negation."""
+        self.var.forward_value = -self.var.children[0].forward_value
+
+    def _backward(self):
+        """Progagate grad values to children of negation operator."""
+        self.var.children[0].op.accum_grad(-self.var.adjoint_value)
+
+    def print(self, prefix: str = ""):
+        """Print negation operator description."""
+        print(
+            prefix + f"{self.var.name}| "
+            f"val={self.var.eval_value} grad={self.var.adjoint_value} "
+            f"forward={self.var.forward_value}"
+        )
+        for child in self.var.children:
+            child.print(prefix + "   ")
+
 class Mult(Op):
     """Multiply operator."""
 
@@ -216,6 +241,13 @@ class Var:
         new.op = Sub(new)
         new.add_child(self)
         new.add_child(resolved)
+        return new
+
+    def __neg__(self):
+        """Return new not that represents negation on self."""
+        new = Var("-")
+        new.op = Neg(new)
+        new.add_child(self)
         return new
 
     def value(self) -> float:

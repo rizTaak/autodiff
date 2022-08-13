@@ -1,4 +1,5 @@
 """Graph tests."""
+from tkinter import Y
 from typing import List, Set
 from autodiff.graph import Var
 
@@ -171,4 +172,19 @@ def test_literal():
     f: Var = x*2.0
     x.assign(3.0)
     assert f.value() == 6.0
+
+def test_negative():
+    """Test negation."""
+    x = Var("x")
+    y = Var("y")
+    f: Var = -x*y
+    x.assign(2.0)
+    y.assign(3.0)
+    dx = f.forward(x)
+    dy = f.forward(y)
+    assert dx == -3.0
+    assert dy == -2.0
+    f.backward()
+    assert dx == x.grad()
+    assert dy == y.grad()
 

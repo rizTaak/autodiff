@@ -45,6 +45,15 @@ def test_literal_print():
     f.value()
     f.print()
 
+def test_negation_print():
+    """Test printing of graph with literal."""
+    x = Var("x")
+    f: Var = -x*2.0
+    x.assign(1.0)
+    f.forward(x)
+    f.print()
+
 
 # test_print()
-test_literal_print()
+# test_literal_print()
+test_negation_print()
