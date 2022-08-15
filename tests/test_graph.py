@@ -208,3 +208,20 @@ def test_div():
     assert dx == x.grad()
     assert dy == y.grad()
 
+
+def test_pow():
+    """Test power."""
+    x = Var("x")
+    y = Var("y")
+    f: Var = x**y
+    x.assign(2.0)
+    y.assign(3.0)
+    val = f.value()
+    assert val == 8.0
+    dx = f.forward(x)
+    dy = f.forward(y)
+    assert close(dx, y.eval_value*((x.eval_value)**(y.eval_value-1)))
+    assert close(dy, f.eval_value*math.log(x.eval_value, math.e))
+    f.backward()
+    assert dx == x.grad()
+    assert dy == y.grad()

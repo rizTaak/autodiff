@@ -1,6 +1,7 @@
 """Graph related types."""
 from collections import deque
 from abc import ABC, abstractmethod
+import math
 from typing import Deque, Iterable, List, Union, cast, Tuple, get_args
 
 Number = Union[float, int]
@@ -146,6 +147,38 @@ class Mult(Op):
             self.var.adjoint_value * self.var.children[0].eval_value
         )
 
+class Pow(Op):
+    """Power operator. Only allows constant values as power."""
+
+    def eval(self):
+        """Return result of power."""
+        self.var.eval_value = (
+            self.var.children[0].eval_value ** self.var.children[1].eval_value
+        )
+
+    def forward(self, wrt: "Var"):
+        """Calculate grad of multiplication."""
+        power_val = self.var.children[1].eval_value
+        power_d = self.var.children[1].forward_value
+        quotient_val = self.var.children[0].eval_value
+        quotient_d = self.var.children[0].forward_value
+        self.var.forward_value = (
+            power_val * quotient_val**(power_val-1) * quotient_d \
+                if id(self.var.children[0]) == id(wrt) else \
+                    (quotient_val**power_val)*math.log(quotient_val, math.e) * power_d
+        )
+
+    def _backward(self):
+        """Progagate grad values to children of multiply operator."""
+        power_val = self.var.children[1].eval_value
+        quotient_val = self.var.children[0].eval_value
+        self.var.children[0].op.accum_grad(
+            power_val * quotient_val**(power_val-1)
+        )
+        self.var.children[1].op.accum_grad(
+            (quotient_val**power_val)*math.log(quotient_val, math.e)
+        )
+
 
 class Div(Op):
     """Division operator."""
@@ -174,6 +207,8 @@ class Div(Op):
         right_val = self.var.children[1].eval_value
         self.var.children[0].op.accum_grad(d_self / right_val)
         self.var.children[1].op.accum_grad(d_self*-1*left_val*right_val**-2)
+
+
 
 class Var:
     """Node in a graph."""
@@ -239,10 +274,20 @@ class Var:
         return new
 
     def __neg__(self):
-        """Return new not that represents negation on self."""
+        """Return new node that represents negation on self."""
         new = Var("-")
         new.op = Neg(new)
         new.add_child(self)
+        return new
+
+    def __pow__(self, other):
+        """Return new node that represents self^other."""
+        new = Var("^")
+        new.op = Pow(new)
+        new.add_child(self)
+        power = Var.resolve(other)
+        power.op = Val(power)
+        new.add_child(power)
         return new
 
     def value(self) -> float:
