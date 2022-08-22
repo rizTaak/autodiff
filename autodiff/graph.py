@@ -147,7 +147,7 @@ class Mult(Op):
             self.var.adjoint_value * self.var.children[0].eval_value
         )
 
-class Pow(Op):
+class ConstPow(Op):
     """Power operator. Only allows constant values as power."""
 
     def eval(self):
@@ -159,24 +159,20 @@ class Pow(Op):
     def forward(self, wrt: "Var"):
         """Calculate grad of multiplication."""
         power_val = self.var.children[1].eval_value
-        power_d = self.var.children[1].forward_value
         quotient_val = self.var.children[0].eval_value
         quotient_d = self.var.children[0].forward_value
-        self.var.forward_value = (
-            power_val * quotient_val**(power_val-1) * quotient_d \
-                if id(self.var.children[0]) == id(wrt) else \
-                    (quotient_val**power_val)*math.log(quotient_val, math.e) * power_d
-        )
+        self.var.forward_value = \
+            power_val * (quotient_val ** (power_val-1)) * quotient_d
 
     def _backward(self):
         """Progagate grad values to children of multiply operator."""
         power_val = self.var.children[1].eval_value
         quotient_val = self.var.children[0].eval_value
         self.var.children[0].op.accum_grad(
-            power_val * quotient_val**(power_val-1)
+            0.0 # fix me
         )
         self.var.children[1].op.accum_grad(
-            (quotient_val**power_val)*math.log(quotient_val, math.e)
+            0.0 # fix me
         )
 
 
@@ -283,7 +279,7 @@ class Var:
     def __pow__(self, other):
         """Return new node that represents self^other."""
         new = Var("^")
-        new.op = Pow(new)
+        new.op = ConstPow(new)
         new.add_child(self)
         power = Var.resolve(other)
         power.op = Val(power)
