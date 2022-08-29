@@ -1,10 +1,10 @@
 """Linear regression."""
-
+import random
 from random import shuffle
 from typing import List, Tuple
 from autodiff.graph import Var
 
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.005
 
 w = Var("w")
 x = Var("x")
@@ -22,8 +22,8 @@ print("l...")
 l.print()
 
 # initialize weights
-w.assign(0.0)
-b.assign(0.0)
+w.assign(random.uniform(-0.3, 0.3)) # nosec
+b.assign(random.uniform(-0.3, 0.3)) # nosec
 
 # training data
 data: List[Tuple[float, float]] \
