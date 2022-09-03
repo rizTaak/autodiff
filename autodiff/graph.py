@@ -3,9 +3,14 @@ from collections import deque
 from abc import ABC, abstractmethod
 import math
 from typing import Deque, Iterable, List, Union, cast, Tuple, get_args
+from wsgiref.validate import PartialIteratorWrapper
 
 Number = Union[float, int]
 NodeType = Union[float, int, "Var"]
+
+def close(left, right) -> bool:
+    """Match 6 digits."""
+    return math.isclose(left, right, abs_tol=0.0000009)
 
 class Op(ABC):
     """Operator in a graph."""
@@ -164,8 +169,10 @@ class Pow(Op):
         power_d = self.var.children[1].forward_value
         quotient_d = self.var.children[0].forward_value
         self.var.forward_value = (
+            power_val * (quotient_val ** (power_val-1)) * quotient_d
+        ) if close(power_d, 0.0) else (
             val * (
-                power_d * math.log(quotient_val, math.e) 
+                power_d * math.log(quotient_val, math.e)
                 + (power_val * quotient_d / quotient_val)
             )
         )

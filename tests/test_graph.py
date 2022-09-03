@@ -1,14 +1,8 @@
 """Graph tests."""
-import math
 from typing import List, Set
-from autodiff.graph import Var
+from autodiff.graph import Var, close
 
 # pylint: disable=invalid-name
-
-
-def close(left, right) -> bool:
-    """Match 6 digits."""
-    return math.isclose(left, right, abs_tol=0.0000009)
 
 def test_eval_mult():
     """Test value is calculated correctly for multiplication."""
