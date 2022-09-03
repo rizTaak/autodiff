@@ -209,7 +209,7 @@ def test_div():
     assert dy == y.grad()
 
 
-def ignore_pow():
+def test_pow():
     """Test power."""
     x = Var("x")
     y = Var("y")
@@ -220,8 +220,8 @@ def ignore_pow():
     assert val == 8.0
     dx = f.forward(x)
     dy = f.forward(y)
-    assert close(dx, y.eval_value*((x.eval_value)**(y.eval_value-1)))
-    assert close(dy, f.eval_value*math.log(x.eval_value, math.e))
+    assert close(dx, 12.0)
+    assert close(dy, 5.545177)
     f.backward()
     assert dx == x.grad()
     assert dy == y.grad()
