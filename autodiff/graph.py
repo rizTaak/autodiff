@@ -180,13 +180,19 @@ class Pow(Op):
 
     def _backward(self):
         """Progagate grad values to children of multiply operator."""
+        val = self.var.eval_value
+        val_d = self.var.adjoint_value
         power_val = self.var.children[1].eval_value
         quotient_val = self.var.children[0].eval_value
         self.var.children[0].op.accum_grad(
-            0.0 # fix me
+            val_d * (power_val) * (quotient_val ** (power_val-1))
         )
         self.var.children[1].op.accum_grad(
-            0.0 # fix me
+            (
+                float('nan')
+            ) if quotient_val <= 0.0 else (
+                 val_d * val * math.log(quotient_val, math.e)
+            )
         )
 
 

@@ -36,12 +36,10 @@ for epoch in range(1000):
     for x_data, y_data in data:
         x.assign(x_data)
         y.assign(y_data)
-        dw = l.forward(w)
-        db = l.forward(b)
-        w.assign(w.value() - LEARNING_RATE * dw)
-        b.assign(b.value() - LEARNING_RATE * db)
+        l.backward()
+        w.assign(w.value() - LEARNING_RATE * w.grad())
+        b.assign(b.value() - LEARNING_RATE * b.grad())
     print(f'w={w.value()} b={b.value()}')
-
 
 # eval
 for x_data, y_data in data:
