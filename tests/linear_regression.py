@@ -43,7 +43,7 @@ for epoch in range(1000):
         l.backward()
         w.assign(w.value() - LEARNING_RATE * w.grad())
         b.assign(b.value() - LEARNING_RATE * b.grad())
-    print(f'w={w.value()} b={b.value()}')
+    # print(f'w={w.value()} b={b.value()}')
 
 # eval
 for x_data, y_data in data:
