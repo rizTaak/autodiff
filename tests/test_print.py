@@ -3,6 +3,22 @@ from autodiff.graph import Var
 
 # pylint: disable=invalid-name
 
+def test_linear():
+    """Print forward graph"""
+    # graph
+    w = Var("w")
+    x = Var("x")
+    b = Var("b")
+
+    f = w*x+b
+
+    w.assign(3.0)
+    b.assign(2.0)
+    x.assign(5.0)
+    f.forward(w)
+    f.print()
+
+
 def test_print():
     """Test printing different states of graph."""
     # graph
@@ -54,6 +70,7 @@ def test_negation_print():
     f.print()
 
 
+test_linear()
 # test_print()
 # test_literal_print()
 # test_negation_print()

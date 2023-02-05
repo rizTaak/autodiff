@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from autodiff.graph import Var
 
 LEARNING_RATE = 0.005
+MINIBATCH_COUNT = 3
 
 w = Var("w")
 x = Var("x")
@@ -35,17 +36,21 @@ data: List[Tuple[float, float]] \
     = list(zip(xs, ys))
 
 # sgd
-for epoch in range(1000):
-    shuffle(data)
-    for x_data, y_data in data:
+for epoch in range(10):
+    grads_w = 0.0
+    grads_b = 0.0
+    for x_data, y_data in random.sample(data, MINIBATCH_COUNT):
         x.assign(x_data)
         y.assign(y_data)
         l.backward()
-        w.assign(w.value() - LEARNING_RATE * w.grad())
-        b.assign(b.value() - LEARNING_RATE * b.grad())
+        grads_w += w.grad()
+        grads_b += b.grad()
+    w.assign(w.value() - LEARNING_RATE * grads_w/MINIBATCH_COUNT)
+    b.assign(b.value() - LEARNING_RATE * grads_b/MINIBATCH_COUNT)
     # print(f'w={w.value()} b={b.value()}')
 
 # eval
+print(f'estimates: w={w.value()} b={b.value()}')
 for x_data, y_data in data:
     x.assign(x_data)
     y.assign(y_data)
